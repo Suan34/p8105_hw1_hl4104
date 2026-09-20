@@ -1,0 +1,92 @@
+---
+title: "p8105_hw1_hl4104"
+date: "2026-09-19"
+author: "Houson Lin" 
+output: 
+  github_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(tidyverse)
+
+#data import
+data("penguins", package = "palmerpenguins")
+```
+
+## Problem 1
+```{r}
+glimpse(penguins)
+```
+By the `glimpse()` function above, we could tell that:
+
+The `penguins` dataset contains measurements for individual penguins observed on islands in the Palmer Archipelago and has **`r nrow(penguins)` rows** and **`r ncol(penguins)` columns**. Each row represents one penguin, and each column represents one characteristic.
+
+The main variables are:
+- `species`: penguin species (`r paste(levels(penguins$species), collapse = ", ")`);
+- `island`: island where the penguin was observed (`r paste(levels(penguins$island), collapse = ", ")`);
+- `bill_length_mm` and `bill_depth_mm`: bill measurements in millimeters;
+- `flipper_length_mm`: flipper length in millimeters;
+- `body_mass_g`: body mass in grams;
+- `sex`: recorded sex (`r paste(levels(penguins$sex), collapse = ", ")`);
+- `year`: year of observation, from `r min(penguins$year, na.rm = TRUE)` to `r max(penguins$year, na.rm = TRUE)`.
+
+There are `r sum(is.na(penguins$flipper_length_mm))` missing values in `flipper_length_mm`. After excluding them with `na.rm = TRUE`, the mean flipper length is **`r round(mean(penguins$flipper_length_mm, na.rm = TRUE), 2)` mm**.
+
+```{r penguin-scatter}
+penguin_plot <- ggplot(
+  penguins,
+  aes(x = bill_length_mm, y = flipper_length_mm, color = species)
+) +
+  geom_point(alpha = 0.35, size = 2, na.rm = TRUE) +
+  theme_minimal(base_size = 12)
+
+penguin_plot
+
+#plot saving
+ggsave(
+  filename = "penguins_scatterplot.png",
+  plot = penguin_plot,
+  width = 8,
+  height = 5,
+  units = "in",
+  dpi = 300
+)
+```
+## Problem 2
+```{r creating data with different types}
+set.seed(8105) # ensuring the unique creation
+
+created_data <- tibble(
+  normal_sample = rnorm(10),
+  above_zero = normal_sample > 0,
+  character_value = as.character(1:10),
+  category = factor(
+    c("l", "m", "h", "l", "m", "h", "l", "m", "h", "l"),
+    levels = c("l", "m", "h") #here l for low, m for medium, h for high
+  )
+)
+
+created_data
+```
+
+```{r mean calculation}
+mean(created_data %>% pull(normal_sample))
+mean(created_data %>% pull(above_zero))
+mean(created_data %>% pull(character_value))
+mean(created_data %>% pull(category))
+```
+Upper two lines of code work and the rest do not, giving warnings that 'argument is not numeric or logical: returning NA'.
+
+
+```{r explicit-coercion, results='hide'}
+as.numeric(created_data %>% pull(above_zero))
+as.numeric(created_data %>% pull(character_value))
+as.numeric(created_data %>% pull(category))
+
+# try mean again
+mean(as.numeric(created_data %>% pull(character_value)))
+mean(as.numeric(created_data %>% pull(category)))
+```
+'as.numeric' function modify the type of those columns into numeric, which gives 0 or 1 to boolean type, numeric value to characters, 123 to different factor levels, and thus they could be calculated by 'mean' and it works.
